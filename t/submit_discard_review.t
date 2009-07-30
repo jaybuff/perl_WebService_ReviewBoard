@@ -20,12 +20,11 @@ use Test::Exception;
 #use Log::Log4perl qw(:easy);
 #Log::Log4perl->easy_init($DEBUG);
 
-use WebService::ReviewBoard;
+use WebService::ReviewBoard::ReviewRequest;
 
-my $rb = WebService::ReviewBoard->new( 'http://demo.review-board.org' );
-$rb->login( 'jay', 'password' );
-my $review = WebService::ReviewBoard::Review->create( { review_board => $rb }, [ repository_id => 1 ] );
-
+my $review = WebService::ReviewBoard::ReviewRequest->new( 'http://demo.review-board.org' );
+$review->login( 'jay', 'password' );
+$review->create( repository_id => 1 );
 
 $review->add_diff( $FindBin::Bin . "/files/foo.patch", '/trunk/reviewboard/' );
 $review->set_description( "this is a description" );
@@ -35,10 +34,6 @@ $review->set_bugs( 1728212, 1723823  );
 $review->set_reviewers( qw( jaybuff ) );
 $review->publish();
 
-
 my $id = $review->get_id();
-
-
 ok( $review->submit_review_request, "setting review to submit status");
 ok( $review->discard_review_request, "discarding review");
-

@@ -8,39 +8,31 @@ use Data::Dumper;
 use Log::Log4perl qw(:easy);
 use HTTP::Request::Common;
 use LWP::UserAgent;
-use version; our $VERSION = qv('0.0.3');
-
-use WebService::ReviewBoard::Review;
+use version; our $VERSION = qv('0.1.0');
 
 sub new {
-	my $proto            = shift;
-	my $review_board_url = shift
+	my $proto = shift;
+	my $url   = shift
 	  or LOGDIE "usage: " . __PACKAGE__ . "->new( 'http://demo.review-board.org' );";
 
+	if ( !$url || $url !~ m#^http://# ) {
+		LOGDIE "url you specified ($url) looks invalid.  Must start with http://";
+	}
+
 	my $class = ref $proto || $proto;
-	my $self = { review_board_url => $review_board_url, };
+	my $self = { review_board_url => $url, };
 
 	return bless $self, $class;
 }
 
-sub get_review_board_url {
-	my $self = shift;
-
-	my $url = $self->{review_board_url};
-	if ( !$url || $url !~ m#^http://# ) {
-		LOGDIE "get_review_board_url(): url you passed to new() ($url) looks invalid";
-	}
-
-	return $url;
-}
+sub get_review_board_url { return shift->{review_board_url}; }
 
 sub login {
 	my $self     = shift;
-	my $username = shift or LOGCROAK "you must pass WebService::ReviewBoard->login a username";
-	my $password = shift or LOGCROAK "you must pass WebService::ReviewBoard->login a password";
+	my $username = shift or LOGCROAK "you must pass login a username";
+	my $password = shift or LOGCROAK "you must pass login a password";
 
 	my $json = $self->api_post(
-		$self->get_ua(),
 		'/api/json/accounts/login/',
 		[
 			username => $username,
@@ -53,20 +45,21 @@ sub login {
 
 sub api_post {
 	my $self = shift;
-	$self->api_call( shift, shift, 'POST', @_ );
+	$self->api_call( shift, 'POST', @_ );
 }
 
 sub api_get {
 	my $self = shift;
-	$self->api_call( shift, shift, 'GET', @_ );
+	$self->api_call( shift, 'GET', @_ );
 }
 
 sub api_call {
 	my $self    = shift;
-	my $ua      = shift or LOGCONFESS "api_call needs an LWP::UserAgent";
 	my $path    = shift or LOGDIE "No url path to api_post";
 	my $method  = shift or LOGDIE "no method (POST or GET)";
 	my @options = @_;
+
+	my $ua = $self->get_ua();
 
 	my $url = $self->get_review_board_url() . $path;
 	my $request;
@@ -79,6 +72,7 @@ sub api_call {
 	else {
 		LOGDIE "Unknown method $method.  Valid methods are GET or POST";
 	}
+
 	DEBUG "Doing request:\n" . $request->as_string();
 	my $response = $ua->request($request);
 	DEBUG "Got response:\n" . $response->as_string();
@@ -121,7 +115,7 @@ WebService::ReviewBoard - Perl library to talk to a review board installation th
 
 =head1 VERSION
 
-This document describes WebService::ReviewBoard version 0.0.3
+This document describes WebService::ReviewBoard version 0.1.0
 
 =head1 SYNOPSIS
 
@@ -131,9 +125,6 @@ This document describes WebService::ReviewBoard version 0.0.3
     my $rb = WebService::ReviewBoard->new( 'http://demo.review-board.org/' );
     $rb->login( 'username', 'password' );
 
-    # create_review returns a WebService::ReviewBoard::Review object 
-    my $review = $rb->create_review();
-  
 =head1 DESCRIPTION
 
 This is an alpha release of C<< WebService::ReviewBoard >>.  The interface may change at any time and there
@@ -162,7 +153,7 @@ Do the HTTP POST to the reviewboard API.
 
 Same as api_post, but do it with an HTTP GET
 
-=item C<< my $json = $rb->api_call( $ua, $path, $method, @options ) >>
+=item C<< my $json = $rb->api_call( $path, $method, @options ) >>
 
 api_post and api_get use this internally
 
@@ -178,8 +169,6 @@ api_post and api_get use this internally
 
 =item C<< "you must pass WebService::ReviewBoard->new a password" >>
 
-=item C<< "api_post needs an LWP::UserAgent" >>
-
 =item C<< "No url path to api_post" >>
 
 =item C<< "Error fetching %s: %s" >>
@@ -187,13 +176,6 @@ api_post and api_get use this internally
 =item C<< "you must call %s as a method" >>
 
 =item C<< "get_review_board_url(): url you passed to new() ($url) looks invalid" >>
-
-=item C<< "Need a field name at (eval 38) line 1" >>
-
-I'm not sure where this error is coming from, but it seems to be when you fail to pass a repository
-path or id to C<< create_review >> method.
-
-
 
 =back
 
@@ -221,6 +203,10 @@ There are also a bunch of Test::* modules that you need if you want all the test
 
 None reported.
 
+=head1 SOURCE CODE REPOSITORY 
+
+This source lives at http://github.com/jaybuff/perl_WebService_ReviewBoard/ 
+
 =head1 BUGS AND LIMITATIONS
 
 No bugs have been reported.
@@ -239,7 +225,6 @@ Copyright (c) 2008, Jay Buffington C<< <jaybuffington@gmail.com> >>. All rights 
 
 This module is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself. See L<perlartistic>.
-
 
 =head1 DISCLAIMER OF WARRANTY
 

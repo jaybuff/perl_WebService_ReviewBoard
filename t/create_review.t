@@ -20,24 +20,24 @@ use Test::Exception;
 #use Log::Log4perl qw(:easy);
 #Log::Log4perl->easy_init($DEBUG);
 
-use WebService::ReviewBoard;
+use WebService::ReviewBoard::ReviewRequest;
 
-ok( my $rb = WebService::ReviewBoard->new( 'http://demo.review-board.org' ), "created new WebService::ReviewBoard object" );
-ok( $rb->login( 'jay', 'password' ), 'logged in' );
-ok( my $review = WebService::ReviewBoard::Review->create( { review_board => $rb }, [ repository_id => 1 ] ), "created review");
+ok( my $rr = WebService::ReviewBoard::ReviewRequest->new( 'http://demo.review-board.org' ), "created new object" );
+ok( $rr->login( 'jay', 'password' ), 'logged in' );
+ok( $rr->create( repository_id => 1 ), "created review");
 
 
-ok( $review->get_id() =~ /^\d+$/, "review has an id that is a number" );
+ok( $rr->get_id() =~ /^\d+$/, "review has an id that is a number" );
 
-ok( $review->add_diff( $FindBin::Bin . "/files/foo.patch", '/trunk/reviewboard/' ), "adding a new diff" );
+ok( $rr->add_diff( $FindBin::Bin . "/files/foo.patch", '/trunk/reviewboard/' ), "adding a new diff" );
 
-ok( $review->set_description( "this is a description" ), "setting the description" );
-ok( $review->set_summary( "this is the summary" ), "set the description" );
+ok( $rr->set_description( "this is a description" ), "setting the description" );
+ok( $rr->set_summary( "this is the summary" ), "set the description" );
 
-ok( $review->set_bugs( 1728212, 1723823  ), "setting bugs");
-ok( $review->set_reviewers( qw( jaybuff ) ), "setting reviewers");
-ok( $review->set_groups( qw(reviewboard) ), "setting groups");
-ok( $review->publish(), "publish" );
+ok( $rr->set_bugs( 1728212, 1723823  ), "setting bugs");
+ok( $rr->set_reviewers( qw( jaybuff ) ), "setting reviewers");
+ok( $rr->set_groups( qw(reviewboard) ), "setting groups");
+ok( $rr->publish(), "publish" );
 
-$review->discard_review_request;
+$rr->discard_review_request;
 
