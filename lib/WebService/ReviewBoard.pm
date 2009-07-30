@@ -8,15 +8,16 @@ use Data::Dumper;
 use Log::Log4perl qw(:easy);
 use HTTP::Request::Common;
 use LWP::UserAgent;
-use version; our $VERSION = qv('0.1.0');
+use version; our $VERSION = qv('0.1.1');
 
 sub new {
 	my $proto = shift;
-	my $url   = shift
-	  or LOGDIE "usage: " . __PACKAGE__ . "->new( 'http://demo.review-board.org' );";
+	my $url   = shift || LOGDIE "usage: " . __PACKAGE__ . "->new( 'http://demo.review-board.org' );";
 
-	if ( !$url || $url !~ m#^http://# ) {
-		LOGDIE "url you specified ($url) looks invalid.  Must start with http://";
+	if ( $url !~ m#^https?://# ) {
+		WARN "url you specified ($url) looks invalid.  Must start with http://";
+        WARN "prefixing with http:// for you";
+        $url = "http://$url";
 	}
 
 	my $class = ref $proto || $proto;
