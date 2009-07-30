@@ -1,5 +1,8 @@
 Revision history for WebService-ReviewBoard
 
+0.1.1 Thu Jul 30 12:59:55 PDT 2009
+    - fix bug #41634: SSL reviewboard URLs not supported
+
 0.1.0 Thu Jul 30 09:46:17 PDT 2009
     - not compatible with older versions.  upgrading will break existing code using this library 
     - renamed WebService::ReviewBoard::Review to WebService::ReviewBoard::ReviewRequest

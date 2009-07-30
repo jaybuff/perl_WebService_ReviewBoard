@@ -114,10 +114,6 @@ __END__
 
 WebService::ReviewBoard - Perl library to talk to a review board installation thru web services.
 
-=head1 VERSION
-
-This document describes WebService::ReviewBoard version 0.1.0
-
 =head1 SYNOPSIS
 
     use WebService::ReviewBoard;
