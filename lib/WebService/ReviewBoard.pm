@@ -80,7 +80,7 @@ sub api_call {
 
 	my $json;
 	if ( $response->is_success ) {
-		$json = JSON::Syck::Load( $response->content() );
+		$json = JSON::Syck::Load( $response->decoded_content() );
 	}
 	else {
 		LOGDIE "Error fetching $path: " . $response->status_line . "\n";
