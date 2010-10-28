@@ -161,30 +161,16 @@ sub _set_field {
 	return $self->reviewrequest_api_post( "draft/set/$field", [ value => $value, ] );
 }
 
-sub _set_reviewrequest_action {
-	my $self   = shift;
-	my $action = shift;
-
-	my $ua     = $self->get_ua();
-
-	use HTTP::Request::Common;
-	my $request = POST( $self->get_review_board_url() . "/r/" . $self->get_id() . "/" . $action . "/" );
-	DEBUG "Doing request:\n" . $request->as_string();
-	my $response = $ua->request($request);
-	DEBUG "Got response:\n" . $response->as_string();
-	return 1;
-}
-
 # discards given review object
 sub discard_review_request {
 	my $self = shift;
-	return $self->_set_reviewrequest_action( "discard", @_ );
+	return  $self->reviewrequest_api_post( "close/discarded" );
 }
 
 # set status as submit for given review object
 sub submit_review_request {
 	my $self = shift;
-	return $self->_set_reviewrequest_action( "submitted", @_ );
+	return  $self->reviewrequest_api_post( "close/submitted" );
 }
 
 sub publish {
