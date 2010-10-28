@@ -190,29 +190,7 @@ sub submit_review_request {
 sub publish {
 	my $self = shift;
 
-	my $path = "/r/" . $self->get_id() . "/publish/";
-	my $ua   = $self->get_ua();
-
-	#XXX I couldn't get reviews/draft/publish from the web api to work, so I did this hack for now:
-	# I asked the review-board mailing list about this.  Waiting for a response...
-	use HTTP::Request::Common;
-
-	my $request = POST( $self->get_review_board_url() . $path );
-	DEBUG "Doing request:\n" . $request->as_string();
-	my $response = $ua->request($request);
-	DEBUG "Got response:\n" . $response->as_string();
-
-	#   $self->reviewrequest_api_post(
-	#		'reviews/draft/publish',
-	#		[
-	#			diff_revision => 1,
-	#			shipit        => 0,
-	#			body_top      => undef,
-	#			body_bottom   => undef,
-	#		]
-	#	);
-
-	return 1;
+    return $self->api_post( "/api/json/reviewrequests/" . $self->get_id() . "/publish/" );
 }
 
 sub add_diff {
