@@ -1,5 +1,8 @@
 Revision history for WebService-ReviewBoard
 
+0.1.2 Thu Oct 28 17:29:53 PDT 2010
+    - fixed $rr->submit_review_request, discard_review_request and publish
+
 0.1.1 Thu Jul 30 12:59:55 PDT 2009
     - fix bug #41634: SSL reviewboard URLs not supported
 
