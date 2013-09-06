@@ -29,8 +29,8 @@ sub as_string {
 sub create {
 	my $self = shift;
 	my %args  = @_;
-
-	my $json = $self->api_post( '/api/json/reviewrequests/new/', [%args] );
+	
+	my $json = $self->api_post( '/api/review-requests/', [%args] );
 	if ( !$json->{review_request} ) {
 		LOGDIE "create couldn't determine ID from this JSON that it got back from the server: " . Dumper $json;
 	}
@@ -44,7 +44,7 @@ sub fetch {
 	my $self = shift;
 	my $id   = shift;
 
-	my $json = $self->api_get( '/api/json/reviewrequests/' . $id );
+	my $json = $self->api_get( '/api/review-requests/' . $id );
 	$self->{rr} = $json->{review_request};
 
 	return $self;
@@ -52,19 +52,10 @@ sub fetch {
 
 sub fetch_all_from_user {
 	my $self = shift;
-    my $from_user = shift;
+	my $from_user = shift;
 
-	my $json = $self->api_get( '/api/json/reviewrequests/from/user/' . $from_user );
-
-    my @rrs;
-	foreach my $request ( @{ $json->{review_requests} } ) {
-		my $rr = $self->new( $self->get_review_board_url() );
-		$rr->{rr} = $request;
-		push @rrs, $rr;
-	}
-
-	return @rrs;
-
+        my $json = $self->api_get( '/api/review-requests/?from-user=' . $from_user );
+	return $json->{review_requests};
 }
 
 # this method makes POST call to reviewboard and performs required action
@@ -72,31 +63,34 @@ sub reviewrequest_api_post {
 	my $self   = shift;
 	my $action = shift;
 
-	return $self->api_post( "/api/json/reviewrequests/" . $self->get_id() . "/$action/", @_ );
+	return $self->api_post( "/api/review-requests/" . $self->get_id() . "/$action/", @_ );
+}
+
+sub reviewrequest_api_put {
+	my $self = shift;
+
+	return $self->api_put( "/api/review-requests/" . $self->get_id() . "/", @_ );
 }
 
 sub get_id          { return shift->_get_field('id'); }
 sub get_description { return shift->_get_field('description'); }
 sub get_summary     { return shift->_get_field('summary'); }
 sub get_bugs        { return shift->_get_field('bugs_closed'); }
+sub get_status      { return shift->_get_field('status'); }
 
 sub get_reviewers {
 	my $self = shift;
-	return [ map { $_->{username} } @{ $self->_get_field('target_people') } ];
+        return [ map { $_->{title} } @{ $self->_get_field('target_people') }];
 }
 
 sub get_groups {
 	my $self = shift;
-	return [ map { $_->{name} } @{ $self->_get_field('target_groups') } ];
+        return [ map { $_->{title} } @{ $self->_get_field('target_groups') } ];
 }
 
 sub get_reviews {
 	my $self = shift;
-
-	my $r = $self->reviewrequest_api_post('reviews');
-	if ( ref( $r->{reviews} ) ne "ARRAY" ) {
-		WARN "api post to fetch reviews didn't return { 'reviews' : [] } as expected";
-	}
+	my $r = $self->api_get( "/api/review-requests/" . $self->get_id() . "/reviews/" );
 
 	return $r->{reviews};
 }
@@ -121,7 +115,6 @@ sub _get_field {
 	if ( !$self->{rr} || !$self->{rr}->{$field} ) {
 		LOGDIE "requested $field, but $field isn't set.  Maybe you need to call fetch first?";
 	}
-
 	return $self->{rr}->{$field};
 }
 
@@ -157,32 +150,32 @@ sub _set_field {
 	# update the cache
 	$self->{rr}->{$field} = $value;
 
-    # send it to the server
-	return $self->reviewrequest_api_post( "draft/set/$field", [ value => $value, ] );
+	# send it to the server
+	return $self->reviewrequest_api_post( "draft", Content => [$field => $value] );
 }
 
 # discards given review object
 sub discard_review_request {
 	my $self = shift;
-	return  $self->reviewrequest_api_post( "close/discarded" );
+	return  $self->reviewrequest_api_put( Content => [status => 'discarded'] );
 }
 
 # set status as submit for given review object
 sub submit_review_request {
 	my $self = shift;
-	return  $self->reviewrequest_api_post( "close/submitted" );
+	return  $self->reviewrequest_api_put( Content => [status => 'submitted'] );
 }
 
 sub publish {
 	my $self = shift;
 
-    return $self->api_post( "/api/json/reviewrequests/" . $self->get_id() . "/publish/" );
+	return $self->_set_field("public", 1);
 }
 
 sub add_diff {
-	my $self    = shift;
-	my $file    = shift;
-	my $basedir = shift;
+	my $self = shift;
+        my $file = shift;
+        my $basedir = shift;
 
 	my $args = [ path => [$file] ];
 
@@ -191,7 +184,7 @@ sub add_diff {
 		push @{$args}, ( basedir => $basedir );
 	}
 
-	$self->reviewrequest_api_post( 'diff/new', Content_Type => 'form-data', Content => $args );
+        $self->reviewrequest_api_post( 'diffs', Content_Type => 'form-data', Content => $args );
 
 	return 1;
 }
