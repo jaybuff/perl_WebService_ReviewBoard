@@ -7,6 +7,7 @@ use JSON::Syck;
 use Data::Dumper;
 use Log::Log4perl qw(:easy);
 use HTTP::Request::Common;
+use HTTP::Request::Common 'DELETE';
 use LWP::UserAgent;
 use version; our $VERSION = qv('0.1.1');
 
@@ -28,22 +29,6 @@ sub new {
 
 sub get_review_board_url { return shift->{review_board_url}; }
 
-sub login {
-	my $self     = shift;
-	my $username = shift or LOGCROAK "you must pass login a username";
-	my $password = shift or LOGCROAK "you must pass login a password";
-
-	my $json = $self->api_post(
-		'/api/json/accounts/login/',
-		[
-			username => $username,
-			password => $password
-		]
-	);
-
-	return 1;
-}
-
 sub api_post {
 	my $self = shift;
 	$self->api_call( shift, 'POST', @_ );
@@ -52,6 +37,16 @@ sub api_post {
 sub api_get {
 	my $self = shift;
 	$self->api_call( shift, 'GET', @_ );
+}
+
+sub api_put {
+	my $self = shift;
+	$self->api_call( shift, 'PUT', @_ );
+}
+
+sub api_delete {
+	my $self = shift;
+	$self->api_call( shift, 'DELETE', @_ );
 }
 
 sub api_call {
@@ -70,8 +65,14 @@ sub api_call {
 	elsif ( $method eq "GET" ) {
 		$request = GET( $url, @options );
 	}
+	elsif ( $method eq "PUT" ) {
+		$request = PUT( $url, @options );
+	}
+	elsif ($method eq "DELETE" ) {
+		$request = DELETE( $url, @options);
+	}
 	else {
-		LOGDIE "Unknown method $method.  Valid methods are GET or POST";
+		LOGDIE "Unknown method $method.  Valid methods are GET, POST, PUT, or DELETE";
 	}
 
 	DEBUG "Doing request:\n" . $request->as_string();
